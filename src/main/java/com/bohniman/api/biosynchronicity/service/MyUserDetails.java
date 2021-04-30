@@ -10,6 +10,9 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import lombok.Data;
+
+@Data
 public class MyUserDetails implements UserDetails {
 
     /**
@@ -17,6 +20,7 @@ public class MyUserDetails implements UserDetails {
      */
     private static final long serialVersionUID = 845754245631245L;
 
+    private Long userId;
     private String username;
     private String password;
     private String mobileNo;
@@ -28,9 +32,10 @@ public class MyUserDetails implements UserDetails {
     private List<GrantedAuthority> authorities;
 
     public MyUserDetails(MasterUser user) {
+        this.userId = user.getUserId();
         this.username = user.getUsername();
         this.password = user.getPassword();
-        this.mobileNo = user.getMobileNo();
+        this.mobileNo = user.getMobileNumber();
         this.isEnable = user.isEnable();
         this.isAccountNotLocked = user.isAccountNotLocked();
         this.isAccountNotExpired = user.isAccountNotExpired();
@@ -60,6 +65,10 @@ public class MyUserDetails implements UserDetails {
 
     public String getEmail() {
         return email;
+    }
+
+    public Long getUserId() {
+        return userId;
     }
 
     @Override

@@ -4,7 +4,6 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 import org.springframework.context.annotation.Bean;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.multipart.MultipartResolver;
 import org.springframework.web.multipart.support.StandardServletMultipartResolver;
 
@@ -14,13 +13,6 @@ public class BiosynchronicityApplication extends SpringBootServletInitializer {
     public static void main(String[] args) {
         SpringApplication.run(BiosynchronicityApplication.class, args);
     }
-
-    // @Bean
-    // public BCryptPasswordEncoder passwordEncoder() {
-    // BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
-    // System.out.println(bCryptPasswordEncoder.encode("pass@123"));
-    // return bCryptPasswordEncoder;
-    // }
 
     @Bean
     public MultipartResolver multipartResolver() {
