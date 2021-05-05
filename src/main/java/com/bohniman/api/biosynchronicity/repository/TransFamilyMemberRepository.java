@@ -1,6 +1,7 @@
 package com.bohniman.api.biosynchronicity.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import com.bohniman.api.biosynchronicity.model.TransFamilyMember;
 
@@ -13,5 +14,7 @@ public interface TransFamilyMemberRepository extends JpaRepository<TransFamilyMe
     List<TransFamilyMember> findAllByMasterUser_userId(Long userId);
 
     TransFamilyMember findByIdAndMasterUser_userId(Long familyMemberId, Long userId);
+
+    Optional<TransFamilyMember> findByisPrimaryAndMasterUser_userId(boolean b, Long userId);
 
 }

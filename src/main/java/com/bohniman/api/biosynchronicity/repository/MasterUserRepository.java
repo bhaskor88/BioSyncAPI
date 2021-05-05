@@ -13,4 +13,6 @@ public interface MasterUserRepository extends JpaRepository<MasterUser, Long> {
     
     Optional<MasterUser> findByUserIdAndOtpAndMobileNumber(Long userId, String otp, String mobileNumber);
 
+    Optional<MasterUser> findByEmail(String email);
+
 }

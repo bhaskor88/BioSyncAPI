@@ -7,9 +7,12 @@ import java.util.stream.Collectors;
 import javax.validation.Valid;
 
 import com.bohniman.api.biosynchronicity.exception.BadRequestException;
-import com.bohniman.api.biosynchronicity.model.MasterUser;
+import com.bohniman.api.biosynchronicity.payload.request.AddressRequest;
+import com.bohniman.api.biosynchronicity.payload.request.AddtionalRequest;
 import com.bohniman.api.biosynchronicity.payload.request.AuthenticationRequest;
-import com.bohniman.api.biosynchronicity.payload.request.OtpVerify;
+import com.bohniman.api.biosynchronicity.payload.request.PasswordRequest;
+import com.bohniman.api.biosynchronicity.payload.request.ProfileRequest;
+import com.bohniman.api.biosynchronicity.payload.request.RegisterRequest;
 import com.bohniman.api.biosynchronicity.payload.response.AuthenticationResponse;
 import com.bohniman.api.biosynchronicity.payload.response.JsonResponse;
 import com.bohniman.api.biosynchronicity.service.MyUserDetails;
@@ -69,13 +72,13 @@ public class IndexController {
         JsonResponse res = new JsonResponse();
         res.setMessage("Login Successful !");
         res.setResult(true);
-        res.setPayload(new AuthenticationResponse(jwt, myUserDetails.getUsername(),myUserDetails.getUserId(),
-        myUserDetails.getAuthorities().stream().map(a -> a.getAuthority()).collect(Collectors.toList())));
+        res.setPayload(new AuthenticationResponse(jwt, myUserDetails.getUsername(), myUserDetails.getUserId(),
+                myUserDetails.getAuthorities().stream().map(a -> a.getAuthority()).collect(Collectors.toList())));
         return ResponseEntity.ok(res);
     }
 
-    @RequestMapping(value = "/register", method = RequestMethod.POST)
-    public ResponseEntity<?> registerUser(@RequestBody @Valid MasterUser user, BindingResult result) {
+    @RequestMapping(value = "/emailVerify", method = RequestMethod.POST)
+    public ResponseEntity<?> registerUser(@RequestBody @Valid RegisterRequest registerUser, BindingResult result) {
         // Data sanity check
         if (result.hasErrors()) {
             List<FieldError> errors = result.getFieldErrors();
@@ -86,9 +89,9 @@ public class IndexController {
             return new ResponseEntity<JsonResponse>(new JsonResponse(false, message, "Data validation error"),
                     HttpStatus.BAD_REQUEST);
         }
-        // Trying to register user
-        JsonResponse res = userService.registerUser(user);
-        // If Registered SuccessFully
+        // Trying to fire OTP for the email
+        JsonResponse res = userService.fireOtp(registerUser);
+        // If OTP fired SuccessFully
         if (res.getResult()) {
             return ResponseEntity.ok(res);
         } else {
@@ -97,7 +100,39 @@ public class IndexController {
     }
 
     @RequestMapping(value = "/verifyOtp", method = RequestMethod.POST)
-    public ResponseEntity<?> registerUser(@RequestBody @Valid OtpVerify otpDetails, BindingResult result) {
+    public ResponseEntity<?> verifyOtp(@RequestBody @Valid RegisterRequest registerUser, BindingResult result) {
+        // Data sanity check
+        if (registerUser.getOtp() != null && registerUser.getOtp().length() == 6) {
+            try {
+                Integer i = Integer.parseInt(registerUser.getOtp());
+            } catch (Exception e) {
+                result.rejectValue("otp", "otp", "Invalid OTP Received");
+            }
+        } else {
+            result.rejectValue("otp", "otp", "Invalid OTP Received");
+        }
+
+        if (result.hasErrors()) {
+            List<FieldError> errors = result.getFieldErrors();
+            List<String> message = new ArrayList<>();
+            for (FieldError e : errors) {
+                message.add("@" + e.getField() + " : " + e.getDefaultMessage());
+            }
+            return new ResponseEntity<JsonResponse>(new JsonResponse(false, message, "Data validation error"),
+                    HttpStatus.BAD_REQUEST);
+        }
+        // Trying to verify OTP
+        JsonResponse res = userService.verifyOtp(registerUser);
+        // If OTP verified SuccessFully
+        if (res.getResult()) {
+            return ResponseEntity.ok(res);
+        } else {
+            throw new BadRequestException(res.getMessage());
+        }
+    }
+
+    @RequestMapping(value = "/createPassword", method = RequestMethod.POST)
+    public ResponseEntity<?> createPassword(@RequestBody @Valid PasswordRequest request, BindingResult result) {
         // Data sanity check
         if (result.hasErrors()) {
             List<FieldError> errors = result.getFieldErrors();
@@ -109,7 +144,71 @@ public class IndexController {
                     HttpStatus.BAD_REQUEST);
         }
         // Trying to register user
-        JsonResponse res = userService.verifyOtp(otpDetails);
+        JsonResponse res = userService.createPassword(request);
+        // If Registered SuccessFully
+        if (res.getResult()) {
+            return ResponseEntity.ok(res);
+        } else {
+            throw new BadRequestException(res.getMessage());
+        }
+    }
+
+    @RequestMapping(value = "/createProfile", method = RequestMethod.POST)
+    public ResponseEntity<?> createProfile(@RequestBody @Valid ProfileRequest request, BindingResult result) {
+        // Data sanity check
+        if (result.hasErrors()) {
+            List<FieldError> errors = result.getFieldErrors();
+            List<String> message = new ArrayList<>();
+            for (FieldError e : errors) {
+                message.add("@" + e.getField() + " : " + e.getDefaultMessage());
+            }
+            return new ResponseEntity<JsonResponse>(new JsonResponse(false, message, "Data validation error"),
+                    HttpStatus.BAD_REQUEST);
+        }
+        // Trying to register user
+        JsonResponse res = userService.createProfile(request);
+        // If Registered SuccessFully
+        if (res.getResult()) {
+            return ResponseEntity.ok(res);
+        } else {
+            throw new BadRequestException(res.getMessage());
+        }
+    }
+    @RequestMapping(value = "/createAddress", method = RequestMethod.POST)
+    public ResponseEntity<?> createAddress(@RequestBody @Valid AddressRequest request, BindingResult result) {
+        // Data sanity check
+        if (result.hasErrors()) {
+            List<FieldError> errors = result.getFieldErrors();
+            List<String> message = new ArrayList<>();
+            for (FieldError e : errors) {
+                message.add("@" + e.getField() + " : " + e.getDefaultMessage());
+            }
+            return new ResponseEntity<JsonResponse>(new JsonResponse(false, message, "Data validation error"),
+                    HttpStatus.BAD_REQUEST);
+        }
+        // Trying to register user
+        JsonResponse res = userService.createAddress(request);
+        // If Registered SuccessFully
+        if (res.getResult()) {
+            return ResponseEntity.ok(res);
+        } else {
+            throw new BadRequestException(res.getMessage());
+        }
+    }
+    @RequestMapping(value = "/createAddtional", method = RequestMethod.POST)
+    public ResponseEntity<?> createAddtional(@RequestBody @Valid AddtionalRequest request, BindingResult result) {
+        // Data sanity check
+        if (result.hasErrors()) {
+            List<FieldError> errors = result.getFieldErrors();
+            List<String> message = new ArrayList<>();
+            for (FieldError e : errors) {
+                message.add("@" + e.getField() + " : " + e.getDefaultMessage());
+            }
+            return new ResponseEntity<JsonResponse>(new JsonResponse(false, message, "Data validation error"),
+                    HttpStatus.BAD_REQUEST);
+        }
+        // Trying to register user
+        JsonResponse res = userService.createAddtional(request);
         // If Registered SuccessFully
         if (res.getResult()) {
             return ResponseEntity.ok(res);

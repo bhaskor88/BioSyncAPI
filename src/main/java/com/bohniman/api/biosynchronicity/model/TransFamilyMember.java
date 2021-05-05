@@ -1,5 +1,6 @@
 package com.bohniman.api.biosynchronicity.model;
 
+import java.util.Date;
 import java.util.Set;
 
 import javax.persistence.Column;
@@ -11,14 +12,15 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import org.hibernate.validator.constraints.Range;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -28,24 +30,25 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class TransFamilyMember  extends Auditable {
+public class TransFamilyMember extends Auditable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank(message = "Name cannot be blank")
+    @NotBlank(message = "First Name cannot be blank")
     @Size(min = 3, max = 255)
     @Pattern(regexp = "(^[ a-zA-Z]+$)", message = "Only Alphabets and Spaces are Allowed")
-    private String name;
+    private String firstName;
+
+    @NotBlank(message = "Last Name cannot be blank")
+    @Size(min = 3, max = 255)
+    @Pattern(regexp = "(^[ a-zA-Z]+$)", message = "Only Alphabets and Spaces are Allowed")
+    private String lastName;
 
     // @NotNull(message = "Age cannot be empty")
-    @Range(min = 0, max = 130)
-    private Long age;
-
-    // @NotBlank(message = "Gender cannot be blank")
-    @Size(min = 3, max = 255)
-    @Pattern(regexp = "(^(Male|Female)$)", message = "Only (Male/Female) values allowed")
-    private String gender;
+    @Temporal(TemporalType.TIMESTAMP)
+    @DateTimeFormat(pattern = "dd-MM-yyyy")
+    private Date dob;
 
     // @NotBlank(message = "Blood Group cannot be blank")
     @Size(min = 1, max = 3)
@@ -61,6 +64,21 @@ public class TransFamilyMember  extends Auditable {
     @Pattern(regexp = "(^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:.[a-zA-Z0-9-]+)*$)", message = "Invalid email provided")
     private String email;
 
+    // TODO: Check and Apply Not Blank validation if applicable
+    private String address;
+    private String city;
+    private String state;
+    private String zip;
+
+    // @NotBlank(message = "Gender cannot be blank")
+    @Size(min = 3, max = 255)
+    @Pattern(regexp = "(^(Male|Female)$)", message = "Only (Male/Female) values allowed")
+    private String gender;
+    
+    private String ethnicity;
+    private String race;
+    private String primaryUse;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "master_user_id")
     private MasterUser masterUser;
@@ -69,6 +87,6 @@ public class TransFamilyMember  extends Auditable {
     private boolean isPrimary;
 
     @JsonIgnore
-    @OneToMany(mappedBy="familyMember")
+    @OneToMany(mappedBy = "familyMember")
     private Set<TransTestResult> testResults;
 }

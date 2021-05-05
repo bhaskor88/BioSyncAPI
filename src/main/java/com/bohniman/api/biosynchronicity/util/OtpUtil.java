@@ -13,7 +13,43 @@ public class OtpUtil {
         return String.format("%06d", number);
     }
 
-    public static boolean fireOtp(String mobileNumber, String otp) {
+    public static boolean fireOtpEmail(String email, String otp) {
         return true;
+    }
+
+    public static boolean fireOtpMobile(String mobileNo, String otp) {
+        return true;
+    }
+
+    public static String getRandomToken(int length) {
+        // create a string of uppercase and lowercase characters and numbers
+        String upperAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        String lowerAlphabet = "abcdefghijklmnopqrstuvwxyz";
+        String numbers = "0123456789";
+        String characters = "_-*<>?$@#%&!";
+
+        // combine all strings
+        String alphaNumeric = upperAlphabet + lowerAlphabet + numbers + characters;
+
+        // create random string builder
+        StringBuilder sb = new StringBuilder();
+
+        // create an object of Random class
+        Random random = new Random();
+
+        for (int i = 0; i < length; i++) {
+
+            // generate random index number
+            int index = random.nextInt(alphaNumeric.length());
+
+            // get character specified by index
+            // from the string
+            char randomChar = alphaNumeric.charAt(index);
+
+            // append the character to string builder
+            sb.append(randomChar);
+        }
+
+        return sb.toString();
     }
 }
