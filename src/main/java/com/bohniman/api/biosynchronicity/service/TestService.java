@@ -1,9 +1,14 @@
 package com.bohniman.api.biosynchronicity.service;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.List;
 import java.util.Optional;
+
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 
 import com.bohniman.api.biosynchronicity.model.MasterQrCode;
 import com.bohniman.api.biosynchronicity.model.TransFamilyMember;
@@ -14,6 +19,8 @@ import com.bohniman.api.biosynchronicity.repository.TransFamilyMemberRepository;
 import com.bohniman.api.biosynchronicity.repository.TransTestResultRepository;
 import com.bohniman.api.biosynchronicity.util.AESEncryption;
 import com.bohniman.api.biosynchronicity.util.AppSettings;
+import com.bohniman.api.biosynchronicity.util.ImageUtil.ImageEvaluation;
+import com.bohniman.api.biosynchronicity.util.ImageUtil.ImageEvalutionThread;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -34,7 +41,8 @@ public class TestService {
     @Autowired
     TransTestResultRepository testResultRepository;
 
-    public JsonResponse createTest(Long userId, MultipartFile file, String qr_code, Long familyMemberId) {
+    public JsonResponse createTest(Long userId, MultipartFile file, String qr_code, Long familyMemberId, String testLat,
+            String testLng) {
         JsonResponse res = new JsonResponse();
         try {
             TransFamilyMember mem = familyMemberRepository.findByIdAndMasterUser_userId(familyMemberId, userId);
@@ -57,11 +65,23 @@ public class TestService {
                         testResult.setFamilyMember(mem);
                         testResult.setQrCode(masterQrCode.getQrCode());
                         testResult.setStatus(AppSettings.TEST_STATUS_PROCESSING);
-
+                        testResult.setLat(testLat);
+                        testResult.setLng(testLng);
                         testResult = testResultRepository.save(testResult);
                         if (testResult != null) {
                             masterQrCode.setUsed(true);
                             masterQrCode = masterQrCodeRepository.save(masterQrCode);
+                            InputStream is = new ByteArrayInputStream(file.getBytes());
+                            BufferedImage image = ImageIO.read(is);
+
+                            // Implementing Threads
+                            // Thread imageEvaluationThread = new Thread(new ImageEvalutionThread(image, testResult.getId(), testResultRepository));
+                            // imageEvaluationThread.start();
+
+                            // Not Implementing Threads
+                            ImageEvaluation imageEvaluation = new ImageEvaluation(image, testResult.getId(), testResultRepository);
+                            testResult = imageEvaluation.updateResult();
+
                             testResult.setFamilyMember(null);
                             testResult.setCapturedImagePath(null);
                             res.setPayload(testResult);

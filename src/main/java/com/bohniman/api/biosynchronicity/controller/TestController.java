@@ -31,7 +31,8 @@ public class TestController {
 
     @PostMapping("/createTest")
     public ResponseEntity<?> uploadFile(@RequestParam("testImage") MultipartFile file,
-            @RequestParam("qr_code") String qr_code, @RequestParam("family_mem_id") Long familyMemberId) {
+            @RequestParam("qr_code") String qr_code, @RequestParam("family_mem_id") Long familyMemberId,
+            @RequestParam("testLat") String testLat, @RequestParam("testLng") String testLng) {
 
         Long userId = securityUtil.getCurrentLoggedUserId();
         if (userId == null) {
@@ -39,14 +40,13 @@ public class TestController {
         }
 
         // Trying to register user
-        JsonResponse res = testService.createTest(userId, file, qr_code, familyMemberId);
+        JsonResponse res = testService.createTest(userId, file, qr_code, familyMemberId, testLat, testLng);
         if (!res.getResult()) {
             throw new BadRequestException(res.getMessage());
         } else {
             return ResponseEntity.ok(res);
         }
     }
-
 
     @RequestMapping(value = "/getTestResults/{familyMemberId}", method = RequestMethod.POST)
     public ResponseEntity<JsonResponse> getTestResults(@PathVariable Long familyMemberId) {

@@ -8,9 +8,12 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class JsonResponse {
-    
+
     private Boolean result = false;
     private Object payload;
     private String message;
 
+    public JsonResponse(Boolean result) {
+        this.result = result;
+    }
 }
