@@ -10,8 +10,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/admin")
 public class AdminController {
 
-    @GetMapping(value = "/hello")
-    public ResponseEntity<?> getHello() {
-        return new ResponseEntity<String>("Hello", HttpStatus.OK);
-    }
+    // @GetMapping(value = "/hello")
+    // public ResponseEntity<?> getHello() {
+    //     return new ResponseEntity<String>("Hello", HttpStatus.OK);
+    // }
 }

@@ -12,7 +12,7 @@
 	<artifactId>biosynchronicity</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>biosynchronicity</name>
-    <packaging>jar</packaging>
+    <packaging>war</packaging>
 	<description>Reporting Portal for Bio Synchronicity</description>
 	<properties>
 		<java.version>1.8</java.version>

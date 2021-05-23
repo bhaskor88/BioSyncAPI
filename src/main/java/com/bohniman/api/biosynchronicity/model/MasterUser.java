@@ -42,7 +42,8 @@ public class MasterUser extends Auditable {
 
     @NotBlank(message = "Username cannot be blank")
     @Size(min = 3, max = 255)
-    @Pattern(regexp = "(^[ a-zA-Z0-9]+$)", message = "Only Alphabets and Spaces are Allowed")
+    // @Pattern(regexp = "(^[ a-zA-Z0-9]+$)", message = "Only Alphabets and Spaces are Allowed")
+    @Pattern(regexp = "(^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:.[a-zA-Z0-9-]+)*$)", message = "Invalid email provided")
     @Column(unique = true)
     private String username;
 
@@ -61,7 +62,7 @@ public class MasterUser extends Auditable {
 
     private String notoficationToken;
 
-    @Column(nullable = false, columnDefinition = "tinyint(1) default 1")
+    @Column(nullable = false, columnDefinition = "tinyint(1) default 0")
     private boolean isEnable;
 
     @Column(nullable = false, columnDefinition = "tinyint(1) default 1")

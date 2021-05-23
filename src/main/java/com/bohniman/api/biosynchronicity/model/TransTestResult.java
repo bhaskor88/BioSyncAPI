@@ -10,6 +10,8 @@ import javax.persistence.ManyToOne;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -37,6 +39,7 @@ public class TransTestResult extends Auditable {
 
     private String testResult;
 
+    @JsonIgnore
     @NotNull(message = "Family Member ID is required")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "family_member_id")

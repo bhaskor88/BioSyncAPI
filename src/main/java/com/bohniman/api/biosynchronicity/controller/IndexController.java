@@ -55,7 +55,6 @@ public class IndexController {
     @RequestMapping(value = "/signin", method = RequestMethod.POST)
     public ResponseEntity<?> createAuthenticationToken(@RequestBody AuthenticationRequest authenticationRequest)
             throws Exception {
-        System.out.println("Enter Auth");
         try {
             authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
                     authenticationRequest.getUsername(), authenticationRequest.getPassword()));
@@ -64,8 +63,6 @@ public class IndexController {
         }
 
         final UserDetails userDetails = userDetailsService.loadUserByUsername(authenticationRequest.getUsername());
-
-        System.err.println(userDetails);
 
         String jwt = jwtUtil.generateToken(userDetails);
         MyUserDetails myUserDetails = (MyUserDetails) userDetails;
@@ -99,6 +96,7 @@ public class IndexController {
         }
     }
 
+    // This Method will create a new user if not exist
     @RequestMapping(value = "/verifyOtp", method = RequestMethod.POST)
     public ResponseEntity<?> verifyOtp(@RequestBody @Valid RegisterRequest registerUser, BindingResult result) {
         // Data sanity check
@@ -122,7 +120,7 @@ public class IndexController {
                     HttpStatus.BAD_REQUEST);
         }
         // Trying to verify OTP
-        JsonResponse res = userService.verifyOtp(registerUser);
+        JsonResponse res = userService.verifyOtpAndCreateUser(registerUser);
         // If OTP verified SuccessFully
         if (res.getResult()) {
             return ResponseEntity.ok(res);
@@ -174,6 +172,7 @@ public class IndexController {
             throw new BadRequestException(res.getMessage());
         }
     }
+
     @RequestMapping(value = "/createAddress", method = RequestMethod.POST)
     public ResponseEntity<?> createAddress(@RequestBody @Valid AddressRequest request, BindingResult result) {
         // Data sanity check
@@ -195,7 +194,8 @@ public class IndexController {
             throw new BadRequestException(res.getMessage());
         }
     }
-    @RequestMapping(value = "/createAddtional", method = RequestMethod.POST)
+
+    @RequestMapping(value = "/createAdditional", method = RequestMethod.POST)
     public ResponseEntity<?> createAddtional(@RequestBody @Valid AddtionalRequest request, BindingResult result) {
         // Data sanity check
         if (result.hasErrors()) {
@@ -216,4 +216,63 @@ public class IndexController {
             throw new BadRequestException(res.getMessage());
         }
     }
+
+    @RequestMapping(value = "/getOtpForgotPassword", method = RequestMethod.POST)
+    public ResponseEntity<?> getOtpForgotPassword(@RequestBody @Valid RegisterRequest registerUser,
+            BindingResult result) {
+        // Data sanity check
+        if (result.hasErrors()) {
+            List<FieldError> errors = result.getFieldErrors();
+            List<String> message = new ArrayList<>();
+            for (FieldError e : errors) {
+                message.add("@" + e.getField() + " : " + e.getDefaultMessage());
+            }
+            return new ResponseEntity<JsonResponse>(new JsonResponse(false, message, "Data validation error"),
+                    HttpStatus.BAD_REQUEST);
+        }
+        // Trying to fire OTP for the email
+        JsonResponse res = userService.fireOtpForgotPassword(registerUser);
+        // If OTP fired SuccessFully
+        if (res.getResult()) {
+            return ResponseEntity.ok(res);
+        } else {
+            throw new BadRequestException(res.getMessage());
+        }
+    }
+
+    @RequestMapping(value = "/verifyOtpForgotPassword", method = RequestMethod.POST)
+    public ResponseEntity<?> verifyOtpForgotPassword(@RequestBody @Valid RegisterRequest registerUser,
+            BindingResult result) {
+        // Data sanity check
+        if (registerUser.getOtp() != null && registerUser.getOtp().length() == 6) {
+            try {
+                Integer i = Integer.parseInt(registerUser.getOtp());
+            } catch (Exception e) {
+                result.rejectValue("otp", "otp", "Invalid OTP Received");
+            }
+        } else {
+            result.rejectValue("otp", "otp", "Invalid OTP Received");
+        }
+
+        if (result.hasErrors()) {
+            List<FieldError> errors = result.getFieldErrors();
+            List<String> message = new ArrayList<>();
+            for (FieldError e : errors) {
+                message.add("@" + e.getField() + " : " + e.getDefaultMessage());
+            }
+            return new ResponseEntity<JsonResponse>(new JsonResponse(false, message, "Data validation error"),
+                    HttpStatus.BAD_REQUEST);
+        }
+        // Trying to verify OTP
+        JsonResponse res = userService.verifyOtpForgotPassword(registerUser);
+        // If OTP verified SuccessFully
+        if (res.getResult()) {
+            return ResponseEntity.ok(res);
+        } else {
+            throw new BadRequestException(res.getMessage());
+        }
+    }
+
+
+
 }

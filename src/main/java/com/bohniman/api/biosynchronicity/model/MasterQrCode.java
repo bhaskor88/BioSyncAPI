@@ -2,6 +2,7 @@ package com.bohniman.api.biosynchronicity.model;
 
 import java.util.Date;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -29,5 +30,10 @@ public class MasterQrCode {
 
     @DateTimeFormat(pattern = "dd-mm-yyyy")
     private Date batchDate;
+
+    @Column(nullable = false, columnDefinition = "tinyint(1) default 0")
+    private boolean isUsed;
+
+    private String flag;
 
 }

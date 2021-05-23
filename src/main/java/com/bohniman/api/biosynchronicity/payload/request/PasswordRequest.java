@@ -30,4 +30,5 @@ public class PasswordRequest {
     @NotBlank(message = "Security Token is required")
     @Size(min = 16, max = 16, message = "Security Token should be 16 character long")
     private String token;
+
 }

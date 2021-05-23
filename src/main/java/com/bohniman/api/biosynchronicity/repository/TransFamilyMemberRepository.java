@@ -15,6 +15,6 @@ public interface TransFamilyMemberRepository extends JpaRepository<TransFamilyMe
 
     TransFamilyMember findByIdAndMasterUser_userId(Long familyMemberId, Long userId);
 
-    Optional<TransFamilyMember> findByisPrimaryAndMasterUser_userId(boolean b, Long userId);
+    Optional<TransFamilyMember> findByIsPrimaryAndMasterUser_userId(boolean b, Long userId);
 
 }

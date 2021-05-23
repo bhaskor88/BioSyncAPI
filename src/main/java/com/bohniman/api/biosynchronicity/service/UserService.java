@@ -45,69 +45,6 @@ public class UserService {
     @Autowired
     PasswordEncoder passwordEncoder;
 
-    // public JsonResponse registerUser(MasterUser user) {
-    // JsonResponse res = new JsonResponse();
-
-    // user.setAccountNotExpired(true);
-    // user.setEnable(false);
-    // user.setAccountNotLocked(true);
-    // user.setCredentialsNotExpired(true);
-    // user.setPassword(passwordEncoder.encode(user.getPassword()));
-
-    // Set<MasterRole> roles = masterRoleRepository.findAllByRoleName("USER");
-    // user.setRoles(roles);
-
-    // MasterUser createdUser = masterUserRepository.save(user);
-
-    // if (createdUser == null) {
-    // res.setMessage("Some error ocurred while saving user");
-    // res.setResult(false);
-    // return res;
-    // }
-
-    // // Creating a new Family Member
-    // TransFamilyMember member = new TransFamilyMember();
-    // member.setAge(createdUser.getAge());
-    // member.setBloodGroup(createdUser.getBloodGroup());
-    // member.setEmail(createdUser.getEmail());
-    // member.setGender(createdUser.getGender());
-    // member.setName(createdUser.getName());
-    // member.setMobileNumber(createdUser.getMobileNumber());
-    // member.setMasterUser(createdUser);
-    // member.setPrimary(true);
-
-    // TransFamilyMember newMember = saveFamilyMember(member);
-
-    // if (newMember == null) {
-    // masterUserRepository.delete(createdUser);
-    // res.setMessage("Some error ocurred while saving Family Member");
-    // res.setResult(false);
-    // return res;
-    // }
-
-    // // All Suceess ! Fire OTP
-
-    // String otp = OtpUtil.getSixDigitOtp();
-    // if (OtpUtil.fireOtp(createdUser.getMobileNumber(), otp)) {
-    // createdUser.setOtp(otp);
-    // createdUser = masterUserRepository.save(createdUser);
-
-    // // Send Success Response
-    // createdUser.setPassword("");
-    // createdUser.setFamilyMembers(null);
-    // res.setPayload(createdUser);
-    // res.setMessage("User registration successful !");
-    // res.setResult(true);
-    // return res;
-    // } else {
-    // familyMemberRepository.delete(newMember);
-    // masterUserRepository.delete(createdUser);
-    // res.setMessage("Some error ocurred while Firing OTP");
-    // res.setResult(false);
-    // return res;
-    // }
-    // }
-
     public TransFamilyMember saveFamilyMember(TransFamilyMember member) {
         return familyMemberRepository.save(member);
     }
@@ -125,6 +62,7 @@ public class UserService {
             } else {
                 res.setResult(true);
                 res.setMessage("Family Member saved successfully!");
+                mem.getMasterUser().setPassword(null);
                 res.setPayload(mem);
             }
             return res;
@@ -175,64 +113,60 @@ public class UserService {
         return res;
     }
 
-    public JsonResponse verifyOtp(RegisterRequest request) {
+    public JsonResponse verifyOtpAndCreateUser(RegisterRequest request) {
         JsonResponse res = new JsonResponse();
-        Optional<MasterOtp> mstrOtp = masterOtpRepository.findByEmail(request.getEmail());
-        if (mstrOtp.isPresent()) {
-            MasterOtp masterOtp = mstrOtp.get();
-            if (masterOtp.getOtp().equals(request.getOtp())) {
-                masterOtp.setToken(OtpUtil.getRandomToken(16));
-                masterOtp = masterOtpRepository.save(masterOtp);
-
-                if (masterOtp != null) {
-
-                    MasterUser user = null;
-                    // Check if the user with the same email exist
-                    Optional<MasterUser> usrOpt = masterUserRepository.findByEmail(request.getEmail());
-                    if (usrOpt.isPresent()) {
-                        // Select the existing user for updation
-                        user = usrOpt.get();
-                    } else {
-                        // Create a new disabled user
-                        user = new MasterUser();
-                    }
-
-                    user.setUsername(request.getEmail());
-                    user.setPassword(passwordEncoder.encode(request.getOtp()));
-                    user.setMobileNumber("0000000000");
-                    user.setEmail(request.getEmail());
-
-                    user.setAccountNotExpired(true);
-                    user.setEnable(false);
-                    user.setAccountNotLocked(true);
-                    user.setCredentialsNotExpired(true);
-
-                    user = masterUserRepository.save(user);
-
-                    if (user != null) {
-                        user.setPassword(masterOtp.getToken());
-                        res.setPayload(user);
-                        res.setResult(true);
-                        res.setMessage("OTP verified Successfully !");
-                    } else {
-                        res.setMessage("Error Creating User Account");
-                        res.setResult(false);
-                    }
-
-                } else {
-                    res.setMessage("Some error has ocurred ! ErrCode : 101");
-                    res.setResult(false);
-                }
-
+        MasterOtp masterOtp = verifyOtp(request);
+        if (masterOtp != null) {
+            MasterUser user = null;
+            // Check if the user with the same email exist
+            Optional<MasterUser> usrOpt = masterUserRepository.findByEmail(request.getEmail());
+            if (usrOpt.isPresent()) {
+                // Select the existing user for updation
+                user = usrOpt.get();
             } else {
-                res.setMessage("Invalid OTP Provided");
+                // Create a new disabled user
+                user = new MasterUser();
+                user.setRoles(masterRoleRepository.findAllByRoleName("USER"));
+            }
+
+            user.setUsername(request.getEmail());
+            user.setPassword(passwordEncoder.encode(request.getOtp()));
+            user.setMobileNumber("0000000000");
+            user.setEmail(request.getEmail());
+
+            user.setAccountNotExpired(true);
+            user.setEnable(false);
+            user.setAccountNotLocked(true);
+            user.setCredentialsNotExpired(true);
+
+            user = masterUserRepository.save(user);
+
+            if (user != null) {
+                user.setPassword(masterOtp.getToken());
+                res.setPayload(user);
+                res.setResult(true);
+                res.setMessage("OTP verified Successfully !");
+            } else {
+                res.setMessage("Error Creating User Account");
                 res.setResult(false);
             }
+
         } else {
-            res.setMessage("Invalid Email or OTP Provided");
+            res.setMessage("Invalid Email or OTP received !");
             res.setResult(false);
         }
         return res;
+    }
+
+    public MasterOtp verifyOtp(RegisterRequest request) {
+        Optional<MasterOtp> mstrOtp = masterOtpRepository.findByEmail(request.getEmail());
+        if (mstrOtp.isPresent() && mstrOtp.get().getOtp().equals(request.getOtp())) {
+            MasterOtp masterOtp = mstrOtp.get();
+            masterOtp.setToken(OtpUtil.getRandomToken(16));
+            masterOtp = masterOtpRepository.save(masterOtp);
+            return masterOtp;
+        }
+        return null;
     }
 
     public JsonResponse updateFamilyMember(TransFamilyMember member, Long userId) {
@@ -269,6 +203,9 @@ public class UserService {
                 mstrOtp = masterOtpRepository.save(mstrOtp);
             }
             if (mstrOtp != null) {
+                // TODO: Uncomment below line in production
+                // res.setMessage("Otp Fired to email - " + registerUser.getEmail() + "
+                // successfully ! ");
                 res.setMessage("Otp Fired to email - " + registerUser.getEmail() + " successfully ! " + otp);
                 res.setResult(true);
             } else {
@@ -292,7 +229,8 @@ public class UserService {
             MasterUser user = userOpt.get();
             // Check if token is valid
             Optional<MasterOtp> optOpt = masterOtpRepository.findByEmail(user.getEmail());
-            if (optOpt.isPresent() && optOpt.get().getToken().equals(request.getToken())) {
+            if (optOpt.isPresent() && optOpt.get().getToken() != null
+                    && optOpt.get().getToken().equals(request.getToken())) {
 
                 // Check if password and confirm pasword matches
                 if (request.getPassword().equals(request.getCpassword())) {
@@ -304,10 +242,10 @@ public class UserService {
                     if (user != null) {
                         user.setPassword(null);
                         res.setPayload(user);
-                        res.setMessage("User Password saved successfully !");
-                        res.setResult(false);
+                        res.setMessage("User Password updated successfully !");
+                        res.setResult(true);
                     } else {
-                        res.setMessage("Error while updating password ! ErrCode : 102");
+                        res.setMessage("Error while updating password !");
                         res.setResult(false);
                     }
 
@@ -337,9 +275,9 @@ public class UserService {
             MasterUser user = userOpt.get();
             // Check if token is valid
             Optional<MasterOtp> optOpt = masterOtpRepository.findByEmail(user.getEmail());
-            if (optOpt.isPresent() && optOpt.get().getToken().equals(request.getToken())) {
+            if (optOpt.get().getToken() != null && optOpt.isPresent()
+                    && optOpt.get().getToken().equals(request.getToken())) {
 
-                // TODO: Create a family member with these details
                 // Save profile details
                 user.setMobileNumber(request.getMobileNumber());
 
@@ -349,7 +287,7 @@ public class UserService {
                     TransFamilyMember familyMember = null;
                     // Get Primary Family Member for the user
                     Optional<TransFamilyMember> familyMemberOpt = familyMemberRepository
-                            .findByisPrimaryAndMasterUser_userId(true, request.getUserId());
+                            .findByIsPrimaryAndMasterUser_userId(true, request.getUserId());
                     if (familyMemberOpt.isPresent()) {
 
                         // Select existing Family Member for updation
@@ -357,6 +295,8 @@ public class UserService {
                     } else {
                         // Create a new Family Member
                         familyMember = new TransFamilyMember();
+                        familyMember.setPrimary(true);
+                        familyMember.setMasterUser(user);
                     }
                     // Update the family member with these details
                     familyMember.setFirstName(request.getFirstName());
@@ -370,16 +310,16 @@ public class UserService {
                     familyMember = familyMemberRepository.save(familyMember);
 
                     if (familyMember != null) {
-                        user.setPassword(null);
-                        res.setPayload(user);
+                        familyMember.getMasterUser().setPassword(null);
+                        res.setPayload(familyMember);
                         res.setMessage("User profile updated successfully !");
                         res.setResult(true);
                     } else {
-                        res.setMessage("Failed saving user profile ! ErrCode : 103");
+                        res.setMessage("Failed saving user profile !");
                         res.setResult(false);
                     }
                 } else {
-                    res.setMessage("Failed saving user profile ! ErrCode : 103");
+                    res.setMessage("Failed saving user profile !");
                     res.setResult(false);
                 }
             } else {
@@ -396,10 +336,213 @@ public class UserService {
     }
 
     public JsonResponse createAddress(@Valid AddressRequest request) {
-        return null;
+        JsonResponse res = new JsonResponse();
+        // Check if user is valid
+        Optional<MasterUser> userOpt = masterUserRepository.findById(request.getUserId());
+        if (userOpt.isPresent()) {
+            MasterUser user = userOpt.get();
+            // Check if token is valid
+            Optional<MasterOtp> optOpt = masterOtpRepository.findByEmail(user.getEmail());
+            if (optOpt.get().getToken() != null && optOpt.isPresent()
+                    && optOpt.get().getToken().equals(request.getToken())) {
+                TransFamilyMember familyMember = null;
+                // Get Primary Family Member for the user
+                Optional<TransFamilyMember> familyMemberOpt = familyMemberRepository
+                        .findByIsPrimaryAndMasterUser_userId(true, request.getUserId());
+                if (familyMemberOpt.isPresent()) {
+
+                    // Select existing Family Member for updation
+                    familyMember = familyMemberOpt.get();
+
+                    familyMember.setAddress(request.getAddress());
+                    familyMember.setCity(request.getCity());
+                    familyMember.setState(request.getState());
+                    familyMember.setZip(request.getZip());
+
+                    familyMember = familyMemberRepository.save(familyMember);
+
+                    if (familyMember != null) {
+                        familyMember.getMasterUser().setPassword(null);
+                        res.setPayload(familyMember);
+                        res.setMessage("User Address updated successfully !");
+                        res.setResult(true);
+                    } else {
+                        res.setMessage("Failed saving user Address !");
+                        res.setResult(false);
+                    }
+                } else {
+                    // A primary Family Member not found for the User
+                    res.setMessage("Primary Family Member Not found for the user ! Try creating a profile first.");
+                    res.setResult(false);
+                }
+
+            } else {
+                res.setMessage("Invalid Token Received");
+                res.setResult(false);
+            }
+
+        } else {
+            res.setMessage("Invalid User Received");
+            res.setResult(false);
+        }
+
+        return res;
     }
 
     public JsonResponse createAddtional(@Valid AddtionalRequest request) {
-        return null;
+        JsonResponse res = new JsonResponse();
+        // Check if user is valid
+        Optional<MasterUser> userOpt = masterUserRepository.findById(request.getUserId());
+        if (userOpt.isPresent()) {
+            MasterUser user = userOpt.get();
+            // Check if token is valid
+            Optional<MasterOtp> optOpt = masterOtpRepository.findByEmail(user.getEmail());
+            if (optOpt.get().getToken() != null && optOpt.isPresent()
+                    && optOpt.get().getToken().equals(request.getToken())) {
+
+                // Delete Security Token
+                MasterOtp otp = optOpt.get();
+                otp.setToken(null);
+                otp = masterOtpRepository.save(otp);
+
+                if (otp != null) {
+
+                    // Enable the user for login
+                    user.setEnable(true);
+                    user = masterUserRepository.save(user);
+
+                    if (user != null) {
+
+                        TransFamilyMember familyMember = null;
+                        // Get Primary Family Member for the user
+                        Optional<TransFamilyMember> familyMemberOpt = familyMemberRepository
+                                .findByIsPrimaryAndMasterUser_userId(true, request.getUserId());
+                        if (familyMemberOpt.isPresent()) {
+                            // Select existing Family Member for updation
+                            familyMember = familyMemberOpt.get();
+                            familyMember.setGender(request.getGender());
+                            familyMember.setEthnicity(request.getEthnicity());
+                            familyMember.setRace(request.getRace());
+                            familyMember.setPrimaryUse(request.getPrimaryUse());
+
+                            familyMember = familyMemberRepository.save(familyMember);
+
+                            if (familyMember != null) {
+                                familyMember.getMasterUser().setPassword(null);
+                                res.setPayload(familyMember);
+                                res.setMessage("User Additional Details updated successfully !");
+                                res.setResult(true);
+                            } else {
+                                res.setMessage("Failed saving user Additional Details !");
+                                res.setResult(false);
+                            }
+                        } else {
+                            // A primary Family Member not found for the User
+                            res.setMessage(
+                                    "Primary Family Member Not found for the user ! Try creating a profile first.");
+                            res.setResult(false);
+                        }
+                    } else {
+                        res.setMessage("Failed Activating User Account.");
+                        res.setResult(false);
+                    }
+
+                } else {
+                    res.setMessage("Some Error has ocurred !");
+                    res.setResult(false);
+                }
+
+            } else {
+                res.setMessage("Invalid Token Received");
+                res.setResult(false);
+            }
+
+        } else {
+            res.setMessage("Invalid User Received");
+            res.setResult(false);
+        }
+
+        return res;
+    }
+
+    public JsonResponse fireOtpForgotPassword(RegisterRequest registerUser) {
+        // TODO: Wait 2 Minutes before firing new OTP
+        JsonResponse res = new JsonResponse();
+        Optional<MasterUser> usrOpt = masterUserRepository.findByEmail(registerUser.getEmail());
+        if (usrOpt.isPresent()) {
+            String otp = OtpUtil.getSixDigitOtp();
+            if (OtpUtil.fireOtpEmail(registerUser.getEmail(), otp)) {
+                MasterOtp mstrOtp = null;
+                Optional<MasterOtp> masterOtp = masterOtpRepository.findByEmail(registerUser.getEmail());
+                if (masterOtp.isPresent()) {
+                    mstrOtp = masterOtp.get();
+                    mstrOtp.setOtp(otp);
+                    mstrOtp = masterOtpRepository.save(mstrOtp);
+                } else {
+                    mstrOtp = new MasterOtp(registerUser.getEmail(), otp);
+                    mstrOtp = masterOtpRepository.save(mstrOtp);
+                }
+                if (mstrOtp != null) {
+                    // TODO: Uncomment below line in production
+                    // res.setMessage("Otp Fired to email - " + registerUser.getEmail() + "
+                    // successfully ! ");
+                    res.setMessage("Otp Fired to email - " + registerUser.getEmail() + " successfully ! " + otp);
+                    res.setResult(true);
+                } else {
+                    res.setMessage("Some error ocurred while Firing OTP");
+                    res.setResult(false);
+                }
+                return res;
+            } else {
+                res.setMessage("Some error ocurred while Firing OTP");
+                res.setResult(false);
+                return res;
+            }
+        }
+        res.setMessage("User not found for provided email ID");
+        res.setResult(false);
+        return res;
+    }
+
+    public JsonResponse verifyOtpForgotPassword(RegisterRequest registerRequest) {
+        JsonResponse res = new JsonResponse();
+        MasterOtp masterOtp = verifyOtp(registerRequest);
+        if (masterOtp != null) {
+            MasterUser user = null;
+            // Check if the user with the same email exist
+            Optional<MasterUser> usrOpt = masterUserRepository.findByEmail(registerRequest.getEmail());
+            if (usrOpt.isPresent()) {
+                // Select the existing user for updation
+                user = usrOpt.get();
+                user.setPassword(masterOtp.getToken());
+                res.setPayload(user);
+                res.setResult(true);
+                res.setMessage("OTP verified Successfully !");
+            } else {
+                res.setMessage("User not found for provided email ID");
+                res.setResult(false);
+            }
+        } else {
+            res.setMessage("Invalid Email or OTP received !");
+            res.setResult(false);
+        }
+        return res;
+    }
+
+    public JsonResponse getUserProfile(Long userId) {
+        JsonResponse res = new JsonResponse();
+
+        Optional<TransFamilyMember> memOpt = familyMemberRepository.findByIsPrimaryAndMasterUser_userId(true, userId);
+        if (memOpt.isPresent()) {
+            TransFamilyMember mem = memOpt.get();
+            mem.getMasterUser().setPassword(null);
+            res.setPayload(mem);
+            res.setMessage("User Profile Fetch Successfully !");
+            res.setResult(true);
+            return res;
+        }
+        res.setMessage("Invalid User Id Received !");
+        res.setResult(false);
+        return res;
     }
 }

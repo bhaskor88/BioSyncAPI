@@ -1,13 +1,18 @@
 package com.bohniman.api.biosynchronicity;
 
+import com.bohniman.api.biosynchronicity.util.CryptoProperties;
+import com.bohniman.api.biosynchronicity.util.FileStorageProperties;
+
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.web.multipart.MultipartResolver;
 import org.springframework.web.multipart.support.StandardServletMultipartResolver;
 
 @SpringBootApplication
+@EnableConfigurationProperties({ FileStorageProperties.class, CryptoProperties.class })
 public class BiosynchronicityApplication extends SpringBootServletInitializer {
 
     public static void main(String[] args) {

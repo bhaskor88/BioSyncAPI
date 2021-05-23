@@ -61,7 +61,7 @@ public class UserController {
         }
     }
 
-    @RequestMapping(value = "/getFamilyMember", method = RequestMethod.GET)
+    @RequestMapping(value = "/getFamilyMember", method = RequestMethod.POST)
     public ResponseEntity<JsonResponse> addFamilyMember() {
         Long userId = securityUtil.getCurrentLoggedUserId();
         if (userId == null) {
@@ -110,6 +110,21 @@ public class UserController {
         }
         // Trying to register user
         JsonResponse res = userService.updateFamilyMember(member, userId);
+        if (!res.getResult()) {
+            throw new BadRequestException(res.getMessage());
+        } else {
+            return ResponseEntity.ok(res);
+        }
+    }
+
+    @RequestMapping(value = "/getUserProfile", method = RequestMethod.POST)
+    public ResponseEntity<JsonResponse> getUserProfile() {
+        Long userId = securityUtil.getCurrentLoggedUserId();
+        if (userId == null) {
+            throw new BadRequestException("Unable to determine the logged in user");
+        }
+        // Trying to register user
+        JsonResponse res = userService.getUserProfile(userId);
         if (!res.getResult()) {
             throw new BadRequestException(res.getMessage());
         } else {

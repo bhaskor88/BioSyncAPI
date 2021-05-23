@@ -10,8 +10,7 @@ import org.springframework.stereotype.Repository;
 public interface MasterUserRepository extends JpaRepository<MasterUser, Long> {
 
     Optional<MasterUser> findByUsername(String username);
-    
-    Optional<MasterUser> findByUserIdAndOtpAndMobileNumber(Long userId, String otp, String mobileNumber);
+    Optional<MasterUser> findByUsernameAndPassword(String username, String password);
 
     Optional<MasterUser> findByEmail(String email);
 
